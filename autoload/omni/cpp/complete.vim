@@ -534,6 +534,11 @@ function! omni#cpp#complete#Main(findstart, base)
     else
         let typeInfo = omni#cpp#items#ResolveItemsTypeInfo(s:contextStack, g:omni#cpp#items#data)
 
+		let localContext = omni#cpp#items#GetLocalContext()
+		if localContext != ''
+			let s:contextStack = [ '::' . localContext ] + s:contextStack
+		endif
+
         if typeInfo != {}
             if g:omni#cpp#items#data[-1].kind == 'itemScope'
                 " B) SCOPE_COMPLETION_MODE

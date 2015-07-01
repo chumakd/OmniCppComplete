@@ -208,6 +208,7 @@ function! omni#cpp#items#ResolveItemsTypeInfo(contextStack, items)
     " It the kind is a C cast or C++ cast, there is no problem, it's the
     " easiest case. We just extract the type of the cast.
 
+	let s:localContext = ''
     let szCurrentContext = ''
     let typeInfo = {}
     " Note: We search the decl only for the first item
@@ -222,7 +223,8 @@ function! omni#cpp#items#ResolveItemsTypeInfo(contextStack, items)
             " If we have MyNamespace::myVar
             " We add MyNamespace in the context stack set szSymbol to myVar
             if match(szSymbol, '::\w\+$') >= 0
-                let szCurrentContext = substitute(szSymbol, '::\w\+$', '', 'g')
+				let s:localContext = substitute(szSymbol, '::\w\+$', '', 'g')
+                let szCurrentContext = s:localContext
                 let szSymbol = matchstr(szSymbol, '\w\+$')
             endif
             let tmpContextStack = a:contextStack
@@ -266,6 +268,10 @@ function! omni#cpp#items#ResolveItemsTypeInfo(contextStack, items)
     endfor
 
     return typeInfo
+endfunc
+
+function! omni#cpp#items#GetLocalContext()
+	return s:localContext
 endfunc
 
 " Get symbol name
@@ -524,6 +530,7 @@ function! s:SearchDecl(szVariable)
         endif
     endif
     call setpos('.', originalPos)
+	"return {}
     return result
 endfunc
 
@@ -651,6 +658,11 @@ function! s:LocalSearchDecl(name)
             continue
         endif
 
+		" Make sure it at least kind of looks like a declaration
+		if getline('.') !~ (a:name . '\s\{-}[;|=]')
+			continue
+		endif
+
         " Remember match
         let declpos = getpos('.')
     endwhile
@@ -676,6 +688,11 @@ function! s:LocalSearchDecl(name)
         if omni#cpp#utils#IsCursorInCommentOrString()
           continue
         endif
+
+		" Make sure it at least kind of looks like a declaration
+		if getline('.') !~ (a:name . '\s\{-}[;|=]')
+			continue
+		endif
 
         " We found match
         call winrestview(winview)
